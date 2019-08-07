@@ -326,7 +326,7 @@ class ToSource:
 
         vb = self.visit(func.body)
         body = body + vb.stmt + f"""return {vb.expr};"""
-        expr = f"""FunctionValueNode::make([=](const std::vector<Value>& {vec}) {{
+        expr = f"""FunctionValueNode::make([&](const std::vector<Value>& {vec}) {{
                 {body}
             }});
             """
