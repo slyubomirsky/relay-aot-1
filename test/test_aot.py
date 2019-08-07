@@ -157,7 +157,7 @@ def test_ref():
     body = relay.Let(iv, relay.RefRead(i), body)
     body = relay.Let(i, relay.RefCreate(relay.const(1, dtype='int32')), body)
     mod[three_with_ref] = relay.Function([], body)
-    cfunc = compile(three_with_ref, mod)
+    cfunc = compile(mod[three_with_ref], mod)
     output = cfunc()
     np.testing.assert_allclose(output.asnumpy(), np.array(3, dtype='int32'))
 
@@ -187,19 +187,19 @@ def test_compose():
     assert nat_to_int(cfunc(p.s(p.s(p.z())))) == 5
 
 
-#def test_recur_sum_local():
-#    mod = Module()
-#    x = var('x', dtype='int32', shape=())
-#    t = relay.TensorType(dtype='int32', shape=())
-#    sum = relay.Var('sum', type_annotation=relay.FuncType([t], t))
-#    c = relay.const(0)
-#    func = Function([x],
-#                    relay.If(op.less(x, c), c, x + sum(x - relay.const(1))),
-#                    t)
-#    body = relay.Let(sum, func, sum(relay.const(10)))
-#    cfunc = compile(mod, Function([], body))
-#    output = cfunc()
-#    np.testing.assert_allclose(output.asnumpy(), np.array(55, dtype='int32'))
+def test_recur_sum_local():
+   mod = Module()
+   x = var('x', dtype='int32', shape=())
+   t = relay.TensorType(dtype='int32', shape=())
+   sum = relay.Var('sum', type_annotation=relay.FuncType([t], t))
+   c = relay.const(0)
+   func = Function([x],
+                   relay.If(op.less(x, c), c, x + sum(x - relay.const(1))),
+                   t)
+   body = relay.Let(sum, func, sum(relay.const(10)))
+   cfunc = compile(Function([], body), mod)
+   output = cfunc()
+   np.testing.assert_allclose(output.asnumpy(), np.array(55, dtype='int32'))
 
 if __name__ == "__main__":
     test_identity()
@@ -217,3 +217,4 @@ if __name__ == "__main__":
     test_ref()
     test_tuple()
     test_compose()
+    test_recur_sum_local()
