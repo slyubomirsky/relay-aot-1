@@ -254,7 +254,11 @@ class ToSource:
         for var, value in decl.bindings:
             local_name = self.fresh_local_name(var)
             self.name_map[var] = local_name
-            vv = self.visit(value)
+            name = None
+            # ensure that name is passed for local recursion
+            if isinstance(value, little_cpp.CPPFunction):
+                name = local_name
+            vv = self.visit(value, name=name)
             source += vv.stmt
             source += f"Value {local_name} = {vv.expr};\n"
         vb = self.visit(decl.body)
@@ -326,7 +330,11 @@ class ToSource:
 
         vb = self.visit(func.body)
         body = body + vb.stmt + f"""return {vb.expr};"""
-        expr = f"""FunctionValueNode::make([&](const std::vector<Value>& {vec}) {{
+        capture = "="
+        # have to capture a locally recursive function by reference
+        if local and name is not None:
+            capture = f"""=, &{name}"""
+        expr = f"""FunctionValueNode::make([{capture}](const std::vector<Value>& {vec}) {{
                 {body}
             }});
             """
