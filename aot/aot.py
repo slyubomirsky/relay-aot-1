@@ -5,7 +5,8 @@ import subprocess
 import tempfile
 import tvm
 from tvm import relay, get_global_func, target, register_func
-from tvm.relay.expr import Expr, Function, Let, GlobalVar
+from tvm.relay.expr import Expr, Let, GlobalVar
+from tvm.relay.function import Function
 from tvm.relay.adt import Constructor
 from tvm.relay.expr_functor import ExprFunctor, ExprVisitor
 from tvm.relay.backend import compile_engine
@@ -98,8 +99,8 @@ class AoTCompiler(ExprFunctor):
         self.bindings[-1].append((var, value))
 
     def optimize(self, expr: Function) -> Function:
-        opts = relay.transform.Sequential([relay.transform.FuseOps(),
-                                           relay.transform.ToANormalForm()])
+        opts = tvm.transform.Sequential([relay.transform.FuseOps(),
+                                         relay.transform.ToANormalForm()])
         self.mod['main'] = expr
         self.mod = opts(self.mod)
         ret = self.mod['main']
